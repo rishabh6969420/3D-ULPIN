@@ -1,0 +1,84 @@
+:root {
+  /* ── Architectural Canvas Palette ── */
+  --bg-primary:   #F5F5F2;
+  --bg-secondary: #FAFAF8;
+  --bg-tertiary:  #EFEFEA;
+  --bg-card:      #FFFFFF;
+
+  --surface:                   #FFFFFF;
+  --surface-container-lowest:  #FFFFFF;
+  --surface-container-low:     #FAFAF8;
+  --surface-container:         #F5F5F2;
+  --surface-container-high:    #EAEAE4;
+  --surface-elevated:          #FFFFFF;
+
+  /* ── Dark Technical 3D Stages ── */
+  --bg-dark-stage:       #090D12;
+  --bg-dark-surface:     #0D1117;
+  --bg-dark-card:        #161B22;
+  --border-dark:         #21262D;
+  --border-dark-subtle:  #30363D;
+  --text-dark-primary:   #F0F6FC;
+  --text-dark-secondary: #8B949E;
+  --text-dark-muted:     #6E7681;
+
+  /* ── Cadastral & Functional Accents (Restrained Cyan/Teal, NO Purple) ── */
+  --accent-teal:         #0D9488;
+  --accent-teal-soft:    rgba(13, 148, 136, 0.12);
+  --accent-teal-glow:    rgba(13, 148, 136, 0.22);
+  --accent-cyan:         #0891B2;
+  --accent-cyan-soft:    rgba(8, 145, 178, 0.12);
+  --accent-cyan-glow:    rgba(8, 145, 178, 0.25);
+  
+  --accent-green:        #10B981;
+  --accent-green-soft:   rgba(16, 185, 129, 0.12);
+  --accent-green-glow:   rgba(16, 185, 129, 0.2);
+
+  --accent-amber:        #D97706;
+  --accent-amber-soft:   rgba(217, 119, 6, 0.12);
+
+  --accent-red:          #DC2626;
+  --accent-red-soft:     rgba(220, 38, 38, 0.12);
+
+  /* ── Primary & Text Hierarchy ── */
+  --primary:             #111827;
+  --primary-hover:       #1F2937;
+  --on-primary:          #FFFFFF;
+
+  --text-primary:        #111827;
+  --text-secondary:      #4B5563;
+  --text-muted:          #6B7280;
+  --text-code:           #0D9488;
+
+  /* ── Borders & Structural Grids ── */
+  --border-color:        #E5E7EB;
+  --border-subtle:       #E2E8F0;
+  --border-strong:       #D1D5DB;
+  --border-cadastral:    #0D9488;
+
+  /* ── Shadows (Restrained, Architectural) ── */
+  --shadow-xs:           0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm:           0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md:           0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg:           0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-xl:           0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* ── Radii (Sleek Engineering Lines) ── */
+  --radius-xs:           2px;
+  --radius-sm:           4px;
+  --radius-md:           8px;
+  --radius-lg:           12px;
+  --radius-xl:           16px;
+  --radius-full:         9999px;
+
+  /* ── Typography ── */
+  --font-display:        'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans:           'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body:           'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:           'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Transitions ── */
+  --transition-fast:     0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal:   0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:     0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}

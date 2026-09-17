@@ -1,0 +1,837 @@
+/* ── Explore Page Architectural GIS Styles ── */
+.explore-page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+}
+
+.explore-main-container {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+  width: 100%;
+}
+
+.explore-layout-grid {
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* ── Left Column: Preview Card ── */
+.explore-preview-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-cadastral-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preview-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent-teal);
+  border-radius: 50%;
+  animation: pulseLive 2s infinite;
+}
+
+@keyframes pulseLive {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* ── Wireframe HUD Box ── */
+.wireframe-hud-box {
+  width: 100%;
+  height: 220px;
+  background: #111827;
+  border: 1px solid var(--border-cadastral);
+  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.4);
+}
+
+.hud-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(13, 148, 136, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 148, 136, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.hud-crosshair-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crosshair-ring {
+  width: 54px;
+  height: 54px;
+  border: 1px dashed rgba(34, 211, 238, 0.5);
+  border-radius: 50%;
+}
+
+.crosshair-x {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-left: 2px solid #22D3EE;
+  border-top: 2px solid #22D3EE;
+  transform: translate(3px, 3px);
+}
+
+.hud-corner {
+  position: absolute;
+  font-size: 0.64rem;
+  color: #94A3B8;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  background: rgba(17, 24, 39, 0.85);
+  border-radius: 2px;
+  backdrop-filter: blur(4px);
+}
+
+.hud-corner.top-left { top: 8px; left: 8px; }
+.hud-corner.top-right { top: 8px; right: 8px; text-align: right; }
+.hud-corner.bottom-left { bottom: 8px; left: 8px; color: #22D3EE; }
+.hud-corner.bottom-right { bottom: 8px; right: 8px; text-align: right; color: #22D3EE; }
+
+/* ── Preset Landmarks Quick Selector ── */
+.presets-selector-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.presets-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.presets-subgroup-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+.lidar-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0D9488;
+  box-shadow: 0 0 8px #14B8A6;
+  animation: pulseLidar 1.6s infinite ease-in-out;
+}
+
+@keyframes pulseLidar {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 12px #2DD4BF; }
+}
+
+.presets-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.preset-tag-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.preset-btn-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.preset-name-text {
+  font-weight: 600;
+  font-size: 0.73rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preset-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
+.preset-tag-btn:hover {
+  background: #FFFFFF;
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+  transform: translateY(-1px);
+}
+
+/* ── Glowing LiDAR Trained Preset Button ── */
+.preset-lidar-btn {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, rgba(20, 184, 166, 0.02) 100%);
+  border-color: rgba(13, 148, 136, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.preset-lidar-btn:hover,
+.preset-lidar-btn.active-lidar {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.12) 0%, rgba(45, 212, 191, 0.08) 100%);
+  border-color: #0D9488;
+  box-shadow: 0 2px 10px rgba(13, 148, 136, 0.18);
+  transform: translateY(-1px);
+}
+
+.badge-lidar-glow {
+  background: rgba(13, 148, 136, 0.14);
+  color: #0D9488;
+  border: 1px solid rgba(13, 148, 136, 0.35);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.preset-dim-spec {
+  color: var(--text-secondary);
+  font-size: 0.62rem;
+}
+
+/* ── Quick Search Shortcuts Bar in Search Form ── */
+.quick-search-shortcuts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+
+.quick-search-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.quick-search-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quick-search-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.quick-search-pill:hover {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.1);
+}
+
+.quick-search-pill.active {
+  background: var(--accent-teal);
+  border-color: var(--accent-teal);
+  color: #FFFFFF;
+}
+
+.quick-search-pill.lidar-pill {
+  background: rgba(13, 148, 136, 0.06);
+  border-color: rgba(13, 148, 136, 0.35);
+}
+
+.pill-lidar-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #0D9488;
+  box-shadow: 0 0 6px #14B8A6;
+}
+
+.pill-lidar-badge {
+  background: #0D9488;
+  color: #FFFFFF;
+  font-size: 0.55rem;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+}
+
+/* ── LiDAR Verified Telemetry Banner on Detected Result Card ── */
+.lidar-verified-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(20, 184, 166, 0.05) 100%);
+  border: 1px solid rgba(13, 148, 136, 0.4);
+  border-radius: var(--radius-xs);
+  margin-top: 4px;
+}
+
+.lidar-banner-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #0D9488;
+  letter-spacing: 0.04em;
+}
+
+.lidar-banner-sub {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
+.preview-specs-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.spec-row .val {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ── Right Column: Ingestion Interface Card ── */
+.explore-interface-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.interface-card {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.interface-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.interface-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.interface-desc {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Selectable Mode Rows ── */
+.mode-selection-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.mode-row-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mode-row-card:hover {
+  background: #FFFFFF;
+  border-color: var(--accent-teal);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);
+  transform: translateX(3px);
+}
+
+.mode-num {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent-teal);
+}
+
+.mode-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mode-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mode-sub {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.mode-arrow {
+  color: var(--text-muted);
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.mode-row-card:hover .mode-arrow {
+  color: var(--accent-teal);
+  transform: translateX(4px);
+}
+
+/* ── Flow Containers (Search & Manual) ── */
+.flow-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 18px;
+  font-size: 0.76rem;
+}
+
+.flow-back-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.flow-back-link:hover {
+  color: var(--text-primary);
+}
+
+.search-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.search-action-row {
+  margin-top: 16px;
+}
+
+.search-btn {
+  width: 100%;
+  padding: 12px;
+}
+
+/* ── Detected Result Card ── */
+.detected-result-card {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-cadastral);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Live satellite thumbnail from ESRI */
+.satellite-thumbnail-container {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-cadastral);
+}
+
+.satellite-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.92) saturate(1.1);
+}
+
+.satellite-overlay-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+  color: var(--accent-teal);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  padding: 8px 10px 6px;
+  text-align: left;
+}
+
+/* Preset button loading state */
+.preset-tag-btn.loading {
+  opacity: 0.7;
+  cursor: wait;
+}
+.preset-tag-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.detected-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+}
+
+.detected-title-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detected-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.detected-city {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.detected-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.detected-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detected-field label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.detected-submit-row {
+  margin-top: 4px;
+}
+
+.submit-detected-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: 0.92rem;
+}
+
+/* ── Manual Wizard Flow ── */
+.wizard-steps-track {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.wizard-step-pill {
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.wizard-step-pill.active {
+  background: var(--primary);
+  border-color: #000000;
+  color: #FFFFFF;
+}
+
+.wizard-step-pill.done {
+  background: var(--accent-teal-soft);
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+}
+
+.step-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 180px;
+}
+
+.review-summary-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-title {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.rev-item span {
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.wizard-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.wizard-next-btn {
+  padding: 11px 24px;
+}
+
+/* ── Standard Coordinate Helpers ── */
+.coord-format-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--accent-teal-soft);
+  border: 1px solid rgba(13, 148, 136, 0.25);
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.coord-format-tip strong {
+  color: var(--accent-teal);
+}
+
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.parsed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.parsed-coord-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.coord-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  padding: 5px 9px;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+}
+
+.coord-chip .chip-label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.coord-chip .chip-val {
+  color: var(--accent-teal);
+  font-weight: 700;
+}
+
+.paste-helper-hint {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.paste-helper-hint code {
+  background: var(--bg-secondary);
+  padding: 1px 4px;
+  border-radius: 2px;
+  border: 1px solid var(--border-color);
+  color: var(--accent-teal);
+}
+
+.explore-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  border-radius: var(--radius-xs);
+  color: #B91C1C;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* ── Responsiveness ── */
+@media (max-width: 1024px) {
+  .explore-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  .search-form-grid, .detected-fields-grid, .review-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .explore-container {
+    padding: 16px 12px;
+  }
+  
+  .interface-card, .search-card {
+    padding: 16px;
+  }
+  
+  .detected-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .detected-title {
+    font-size: 1.25rem;
+    word-break: break-word;
+  }
+  
+  .map-preview-frame {
+    height: 150px;
+  }
+}

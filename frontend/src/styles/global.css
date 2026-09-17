@@ -1,0 +1,278 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import 'maplibre-gl/dist/maplibre-gl.css';
+@import './variables.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Typography Utilities ── */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+}
+
+/* ── Technical Surface & Cards ── */
+.cadastral-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.cadastral-panel-dark {
+  background: var(--bg-dark-surface);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  color: var(--text-dark-primary);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Primary Button (Charcoal / Architectural) ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-size: 0.86rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  letter-spacing: 0.02em;
+  border: 1px solid #000000;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-xs);
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  border-color: #000000;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Secondary Button (Clean Neutral) ── */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  background: #FFFFFF;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-secondary);
+  border-color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+/* ── Dark Stage Buttons ── */
+.btn-dark-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: #F9FAFB;
+  color: #111827;
+  font-size: 0.86rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  border: 1px solid #FFFFFF;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-dark-primary:hover {
+  background: #FFFFFF;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* ── Technical Form Inputs ── */
+input[type="text"],
+input[type="url"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-family: var(--font-body);
+  transition: all var(--transition-fast);
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 3px var(--accent-teal-soft);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── MapLibre Overrides ── */
+.maplibregl-map { font-family: var(--font-sans); }
+.maplibregl-ctrl-attrib { display: none !important; }
+.maplibregl-ctrl-group {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* ── Custom Scrollbars ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.3);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(107, 114, 128, 0.5); }
+
+/* ── Technical Cadastral Chips ── */
+.chip-cadastral {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  background: var(--accent-teal-soft);
+  color: var(--accent-teal);
+  border: 1px solid rgba(13, 148, 136, 0.25);
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.03em;
+}
+
+.chip-neutral {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  background: #E5E7EB;
+  color: #374151;
+  border: 1px solid #D1D5DB;
+  border-radius: var(--radius-sm);
+}
+
+.chip-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  background: var(--accent-green-soft);
+  color: var(--accent-green);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-sm);
+}
+
+.chip-amber {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  background: var(--accent-amber-soft);
+  color: var(--accent-amber);
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  border-radius: var(--radius-sm);
+}
+
+/* ── Engineering Grid Backgrounds ── */
+.bg-cadastral-grid {
+  background-color: var(--bg-primary);
+  background-image:
+    linear-gradient(rgba(17, 24, 39, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 24, 39, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.bg-dark-grid {
+  background-color: var(--bg-dark-stage);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}

@@ -1,0 +1,110 @@
+"""
+backend/main.py
+─────────────────────────────────────────────
+FastAPI application entry point.
+Mounts all routers, configures CORS, and handles startup/shutdown.
+"""
+
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import logging
+
+import asyncio
+from backend.config import settings
+from backend.database import check_db_connection
+from backend.supabase_client import ensure_storage_bucket_exists
+from backend.services.keep_alive import start_keep_alive_loop
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.DEBUG if settings.debug else logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+# ── Lifespan (startup / shutdown) ─────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Run startup checks, then yield control to FastAPI, then cleanup."""
+    logger.info("🚀 Starting 3D-ULPIN Backend...")
+
+    # Verify Supabase DB connection
+    db_ok = await check_db_connection()
+    if not db_ok:
+        logger.error("❌ Could not connect to Supabase DB — check DATABASE_URL in .env")
+
+    # Ensure Storage bucket exists
+    await ensure_storage_bucket_exists()
+
+    # Start Render Free-Tier Keep-Alive background worker
+    keep_alive_task = asyncio.create_task(start_keep_alive_loop())
+
+    logger.info("✅ Backend startup complete")
+    yield
+
+    logger.info("🛑 Shutting down backend...")
+    keep_alive_task.cancel()
+    try:
+        await keep_alive_task
+    except asyncio.CancelledError:
+        pass
+
+
+# ── App ───────────────────────────────────────────────────────────────────────
+app = FastAPI(
+    title="3D ULPIN API",
+    description="Backend API for 3D Unique Land Parcel Identification Number system",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan,
+)
+
+# ── CORS ──────────────────────────────────────────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Routers ───────────────────────────────────────────────────────────────────
+# Imported here to avoid circular imports
+from backend.routes import health  # noqa: E402
+from backend.api.endpoints import router as api_router
+
+app.include_router(health.router)
+app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/api")
+app.include_router(api_router, prefix="/v1")
+app.include_router(api_router)
+
+# ── Static Files ─────────────────────────────────────────────────────────────
+import os
+from fastapi.staticfiles import StaticFiles
+
+_sample_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../sample_data"))
+os.makedirs(_sample_data_dir, exist_ok=True)
+app.mount("/sample_data", StaticFiles(directory=_sample_data_dir), name="sample_data")
+app.mount("/api/sample_data", StaticFiles(directory=_sample_data_dir), name="api_sample_data")
+
+
+# ── Ping / Keep-Alive ────────────────────────────────────────────────────────
+@app.get("/ping", tags=["root"])
+async def ping():
+    """Ultra-fast ping endpoint for keep-alive checkers."""
+    return {"status": "ok", "message": "pong"}
+
+
+# ── Root ──────────────────────────────────────────────────────────────────────
+@app.get("/", tags=["root"])
+async def root():
+    return {
+        "service": "3D ULPIN API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/api/health",
+    }

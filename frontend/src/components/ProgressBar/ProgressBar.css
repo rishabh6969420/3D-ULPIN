@@ -1,0 +1,78 @@
+/* ── ProgressBar Container (Architectural GIS) ── */
+.progress-bar-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.progress-pct {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+
+/* Track */
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: none;
+}
+
+/* Fill */
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--accent-teal);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* Shimmer */
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { left: -40%; }
+  100% { left: 120%; }
+}
+
+/* Done / Error states */
+.progress-fill.done {
+  background: var(--accent-green);
+}
+
+.progress-fill.done::after { display: none; }
+
+.progress-fill.error {
+  background: var(--accent-red);
+}
+
+.progress-fill.error::after { display: none; }

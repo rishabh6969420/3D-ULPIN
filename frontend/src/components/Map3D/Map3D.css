@@ -1,0 +1,1095 @@
+/* ── 3D Viewport Main Wrapper ── */
+.map3d-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #060a12;
+  overflow: hidden;
+}
+
+.deckgl-map-container,
+.threejs-map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  overflow: hidden;
+}
+
+.threejs-canvas-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Mode Toggle Switch Banner ── */
+.mode-switch-banner {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(10, 15, 29, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.mode-switch-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.mode-switch-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mode-switch-btn.active {
+  background: var(--accent-teal);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(13, 148, 136, 0.4);
+}
+
+/* ── Floating Controls Overlay ── */
+.floating-toolbar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(10, 15, 29, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.map-control-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.map-control-btn:hover {
+  color: #ffffff;
+  background: var(--accent-teal);
+  border-color: var(--accent-teal);
+}
+
+/* Basemap Selector */
+.basemap-selector-box {
+  position: absolute;
+  top: 62px;
+  left: 14px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 15, 29, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  box-shadow: var(--shadow-md);
+  font-size: 0.78rem;
+  color: #cbd5e1;
+}
+
+.basemap-select-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-xs);
+  color: #ffffff;
+  font-size: 0.76rem;
+  padding: 4px 8px;
+  outline: none;
+  cursor: pointer;
+}
+
+.basemap-select-input option {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* Location HUD Badge */
+.location-hud-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(10, 15, 29, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  box-shadow: var(--shadow-md);
+}
+
+.location-icon-pin {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-teal-soft);
+  color: var(--accent-teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.location-text-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.location-bldg-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.location-coords-sub {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--accent-teal);
+}
+
+/* Bottom Tech Badge */
+.tech-badge-footer {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 15, 29, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.map-control-btn.active {
+  background: rgba(13, 148, 136, 0.35);
+  border-color: rgba(13, 148, 136, 0.6);
+  color: #fff;
+}
+
+.terrain-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.terrain-toggle-label input {
+  accent-color: var(--accent-teal);
+}
+
+.map-attribution-footer {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  z-index: 15;
+  max-width: 55%;
+  font-size: 0.58rem;
+  line-height: 1.3;
+  color: rgba(148, 163, 184, 0.75);
+  text-align: right;
+  pointer-events: none;
+}
+
+/* ── Underground Subsurface Spatial Record Panel ── */
+.underground-info-panel {
+  position: absolute;
+  bottom: 50px;
+  right: 14px;
+  z-index: 30;
+  width: 320px;
+  background: rgba(10, 15, 30, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: #f1f5f9;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(124, 111, 224, 0.15);
+  animation: slideUpFade 0.25s ease-out;
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.underground-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.underground-info-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ug-icon {
+  flex-shrink: 0;
+}
+
+.ug-title-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.ug-subtitle-text {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.ug-badge {
+  display: inline-block;
+  background: rgba(167, 139, 250, 0.2);
+  color: #c4b5fd;
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.ug-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 6px;
+  color: #94a3b8;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.ug-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.underground-info-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ug-ulpin-box {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ug-ulpin-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #818cf8;
+  letter-spacing: 0.05em;
+}
+
+.ug-ulpin-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #38bdf8;
+  word-break: break-all;
+}
+
+.ug-grid-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ug-stat-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ug-stat-label {
+  font-size: 0.64rem;
+  color: #94a3b8;
+}
+
+.ug-stat-val {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-top: 2px;
+}
+
+.ug-status-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.7rem;
+  color: #6ee7b7;
+}
+
+/* ── 3D Anchored Floating Badges (Building Apex & Floor Level) ── */
+.anchored-badge-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 18;
+}
+
+.anchored-building-badge {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  background: rgba(10, 15, 29, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(124, 111, 224, 0.45);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(124, 111, 224, 0.2);
+  color: #f1f5f9;
+  font-family: 'Inter', sans-serif;
+  pointer-events: auto;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  max-width: 280px;
+}
+
+.anchored-building-badge::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(10, 15, 29, 0.94);
+}
+
+.badge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.badge-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-ulpin {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.badge-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 0.68rem;
+  color: #cbd5e1;
+  margin-top: 4px;
+}
+
+.badge-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-stat-label {
+  color: #94a3b8;
+}
+
+.badge-stat-val {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.badge-chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.badge-chip {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.badge-chip.validated {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
+}
+
+.badge-chip.source {
+  background: rgba(124, 111, 224, 0.15);
+  border: 1px solid rgba(124, 111, 224, 0.35);
+  color: #c4b5fd;
+}
+
+/* Selected Floor Anchored Floating Card */
+.anchored-floor-badge {
+  position: absolute;
+  transform: translate(24px, -50%);
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 10px rgba(56, 189, 248, 0.25);
+  color: #f1f5f9;
+  font-family: 'Inter', sans-serif;
+  pointer-events: auto;
+  min-width: 170px;
+  z-index: 22;
+}
+
+.anchored-floor-badge::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 8px solid rgba(56, 189, 248, 0.8);
+}
+
+.floor-badge-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.floor-badge-unit {
+  font-size: 0.68rem;
+  font-family: var(--font-mono, monospace);
+  color: #e2e8f0;
+  margin-top: 3px;
+}
+
+.floor-badge-detail {
+  font-size: 0.64rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Floor Level Micro Markers (F1, F2, F3...) */
+.floor-level-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.floor-level-marker:hover,
+.floor-level-marker.active {
+  background: var(--accent-teal);
+  border-color: #ffffff;
+  color: #ffffff;
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 0 8px rgba(13, 148, 136, 0.6);
+}
+
+/* ── 3D Architectural Telemetry HUD ── */
+.architectural-telemetry-hud {
+  position: absolute;
+  top: 76px;
+  left: 16px;
+  z-index: 15;
+  background: rgba(10, 15, 29, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(124, 111, 224, 0.35);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  max-width: 360px;
+  pointer-events: auto;
+  animation: fadeInHud 0.25s ease-out;
+}
+
+@keyframes fadeInHud {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hud-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hud-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #c4b5fd;
+  text-transform: uppercase;
+}
+
+.hud-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+}
+
+.hud-badge.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+.hud-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.68rem;
+}
+
+.hud-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hud-k {
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.hud-v {
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  color: #f1f5f9;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Photorealistic 3D Tiles Status Pill ── */
+.photorealistic-status-pill {
+  position: absolute;
+  top: 62px;
+  left: 14px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 15, 29, 0.90);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(124, 111, 224, 0.3);
+  padding: 5px 12px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+  animation: fadeInHud 0.2s ease-out;
+}
+
+/* ── Three.js Studio Appearance Mode Toggle ── */
+.three-material-toggle-group {
+  position: absolute;
+  top: 62px;
+  left: 14px;
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(10, 15, 29, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full, 9999px);
+  padding: 3px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.three-mat-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.65);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.three-mat-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.three-mat-btn.active {
+  background: #0ea5e9;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.4);
+}
+
+
+
+
+
+/* ─────────────────────────────────────────────────────────────
+   CAMPUS & MULTI-BUILDING IN-VIEWPORT UI (Phase 4 nextplan.md)
+   ───────────────────────────────────────────────────────────── */
+
+.campus-complex-bar {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 9999px;
+  padding: 6px 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 16px rgba(245, 158, 11, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 90vw;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.campus-complex-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.campus-bar-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+}
+
+.campus-bar-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fbbf24;
+  letter-spacing: 0.02em;
+}
+
+.campus-count-badge {
+  font-size: 0.60rem;
+  padding: 1px 6px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fde68a;
+  border-radius: 9999px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.campus-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.campus-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: rgba(30, 41, 59, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 0.70rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.campus-chip:hover {
+  background: rgba(51, 65, 85, 0.95);
+  color: #ffffff;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.campus-chip.active {
+  background: rgba(14, 165, 233, 0.22);
+  color: #ffffff;
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+}
+
+.chip-metric {
+  font-size: 0.60rem;
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* Floating Selected Campus Card in 3D Viewport */
+.selected-campus-card {
+  position: absolute;
+  top: 64px;
+  left: 18px;
+  z-index: 24;
+  width: 280px;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #f1f5f9;
+}
+
+.campus-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.campus-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.card-icon {
+  font-size: 1.25rem;
+}
+
+.card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.card-type {
+  font-size: 0.62rem;
+  color: #94a3b8;
+}
+
+.card-close-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.card-close-btn:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.campus-card-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.metric-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.m-label {
+  font-size: 0.55rem;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.m-val {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.campus-card-desc {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  line-height: 1.35;
+  margin: 0;
+  font-family: var(--font-sans, sans-serif);
+}
+
+.btn-inspect-cert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(16, 185, 129, 0.25));
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 6px;
+  color: #38bdf8;
+  font-size: 0.66rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-inspect-cert:hover {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.4), rgba(16, 185, 129, 0.4));
+  color: #ffffff;
+  border-color: #38bdf8;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3D FLOOR SLICING & ISOLATION BAR (Phase 3 nextplan.md)
+   ───────────────────────────────────────────────────────────── */
+
+.threejs-floor-slicer {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  background: rgba(15, 23, 42, 0.90);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 9999px;
+  padding: 5px 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), 0 0 14px rgba(56, 189, 248, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f1f5f9;
+}
+
+.floor-slicer-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #38bdf8;
+  padding-right: 6px;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.03em;
+}
+
+.floor-step-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.floor-step-btn:hover:not(:disabled) {
+  background: #0ea5e9;
+  color: #ffffff;
+  border-color: #38bdf8;
+}
+
+.floor-step-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.floor-current-badge {
+  font-size: 0.70rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  min-width: 140px;
+  text-align: center;
+}
+
+.all-floors-text {
+  color: #94a3b8;
+}
+
+.isolated-floor-text {
+  color: #38bdf8;
+}
+
+.floor-reset-btn {
+  font-size: 0.64rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.floor-reset-btn:hover {
+  background: rgba(239, 68, 68, 0.35);
+  color: #ffffff;
+}
+

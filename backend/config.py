@@ -1,0 +1,60 @@
+"""
+backend/config.py
+─────────────────────────────────────────────
+Central settings loader using pydantic-settings.
+All config comes from .env file — never hardcoded.
+"""
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from functools import lru_cache
+from pathlib import Path
+
+# Resolve .env path — works whether run from project root or backend/
+_BACKEND_DIR = Path(__file__).parent
+_ENV_FILE = _BACKEND_DIR / ".env"
+
+
+class Settings(BaseSettings):
+    # ── Supabase ──────────────────────────────
+    supabase_url: str = "https://mock.supabase.co"
+    supabase_anon_key: str = "mock_anon_key"
+    supabase_service_role_key: str = "mock_service_role_key"
+    supabase_storage_bucket: str = "aerial-images"
+
+    # ── Database ──────────────────────────────
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/postgres"
+
+    # ── App ───────────────────────────────────
+    secret_key: str = "change-me"
+    debug: bool = False
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,https://*.vercel.app,*"
+    gemini_api_key: str = ""
+    groq_api_key: str = ""
+    hf_api_key: str = ""
+
+    # ── Keep-Alive (Render Free Tier 24/7) ────
+    keep_alive_enabled: bool = True
+    keep_alive_interval_seconds: int = 600  # Ping every 10 mins (safely under 15 min limit)
+    backend_public_url: str = "https://threed-ulpin-backend-v9ur.onrender.com"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse comma-separated CORS origins into a list."""
+        return [origin.strip() for origin in self.cors_origins.split(",")]
+
+    model_config = SettingsConfigDict(
+        env_file=str(_ENV_FILE),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+
+@lru_cache()
+def get_settings() -> Settings:
+    """Return cached settings instance (loaded once at startup)."""
+    return Settings()
+
+
+# Convenience alias used throughout the app
+settings = get_settings()
