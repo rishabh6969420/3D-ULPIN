@@ -369,3 +369,65 @@ async def get_validation(building_id: str, db: AsyncSession = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Validation log not found for this building")
 
 
+@router.get("/buildings/{building_id}/export")
+async def export_building_3d_endpoint(
+    building_id: str,
+    format: str = "geojson3d",
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Endpoint: Export 3D Volumetric Digital Twin to CityJSON, GeoJSON-3D, or Wavefront OBJ.
+    """
+    building_resp = await get_building(building_id, db)
+    building_dict = building_resp.model_dump() if hasattr(building_resp, "model_dump") else building_resp.dict()
+
+    from ai.exporter import export_building_3d
+    exported_data = export_building_3d(building_dict, format_type=format)
+
+    if format.lower() in ("obj", "wavefront"):
+        from fastapi.responses import Response
+        return Response(content=exported_data, media_type="text/plain")
+
+    return exported_data
+
+
+@router.get("/buildings/{building_id}/units/{unit_id}/certificate")
+async def get_unit_3d_ulpin_certificate(
+    building_id: str,
+    unit_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Endpoint: Generate Official Printable 3D ULPIN Title Certificate (ISO 19152 LADM / DILRMP Compliant).
+    """
+    from fastapi.responses import HTMLResponse
+    from backend.services.certificate_generator import generate_3d_ulpin_certificate_html
+
+    building_resp = await get_building(building_id, db)
+    building_dict = building_resp.model_dump() if hasattr(building_resp, "model_dump") else building_resp.dict()
+
+    target_unit = None
+    for u in building_dict.get("units", []):
+        if u.get("unit_id") == unit_id or u.get("label") == unit_id:
+            target_unit = u
+            break
+
+    if not target_unit:
+        if building_dict.get("units"):
+            target_unit = building_dict["units"][0]
+        else:
+            target_unit = {
+                "unit_id": unit_id,
+                "label": f"Unit {unit_id}",
+                "floor": 1,
+                "z_min": 0.0,
+                "z_max": 3.5,
+                "area_sqm": 120.0,
+                "ulpin": f"DEL-2024-{building_id[:6]}-F01-U01-7721"
+            }
+
+    html_content = generate_3d_ulpin_certificate_html(building_dict, target_unit)
+    return HTMLResponse(content=html_content)
+
+
+

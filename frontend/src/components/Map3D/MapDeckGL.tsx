@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import DeckGL from '@deck.gl/react';
+import { AmbientLight, DirectionalLight, LightingEffect } from '@deck.gl/core';
 import { GeoJsonLayer, TextLayer, ColumnLayer, PathLayer } from '@deck.gl/layers';
 import { Tile3DLayer } from '@deck.gl/geo-layers';
 import { Tiles3DLoader } from '@loaders.gl/3d-tiles';
@@ -15,7 +16,10 @@ import {
   getFootprintDimensions,
   getPresentationClassification,
 } from '../../utils/footprintUtils';
-import { getBuildingUtilityPipelines } from '../../utils/utilityNetworkHelper';
+import {
+  getBuildingUtilityPipelines,
+  getNeighborhoodUtilityPipelines,
+} from '../../utils/utilityNetworkHelper';
 import { REEARTH, setupReearthTerrain } from '../../utils/reearth';
 import { buildCadastralVolumes, CadastralVolumesResult } from '../../utils/cadastralVolumeBuilder';
 import {
@@ -23,6 +27,11 @@ import {
   hasGoogle3DTilesKey,
   Photorealistic3DStatus,
 } from '../../utils/google3DTilesProvider';
+import {
+  fetchSurroundingCityContext,
+  generateSurroundingFloorsGeoJSON,
+  SurroundingCityContext,
+} from '../../utils/cityContextFetcher';
 import {
   RotateCw,
   Layers,
@@ -97,7 +106,11 @@ export default function MapDeckGL({
   const [hoveredUnitId, setHoveredUnitId] = useState<string | null>(null);
   const [hoveredFloorNumber, setHoveredFloorNumber] = useState<number | null>(null);
   const [hoveredUnitInfo, setHoveredUnitInfo] = useState<{ unit: Unit; x: number; y: number } | null>(null);
-  const [showContextBuildings, setShowContextBuildings] = useState(true);
+  
+  // ── 3D Neighborhood City Context State (500m / 1km / Off) ──
+  const [contextRadius, setContextRadius] = useState<'500m' | '1km' | 'off'>('1km');
+  const [surroundingCityContext, setSurroundingCityContext] = useState<SurroundingCityContext | null>(null);
+
   const [terrainEnabled, setTerrainEnabled] = useState(true);
   const [showUnderground, setShowUnderground] = useState(true);
   const [selectedUnderground, setSelectedUnderground] = useState<any | null>(null);
@@ -108,6 +121,20 @@ export default function MapDeckGL({
     return hasGoogle3DTilesKey() ? 'loading' : 'unavailable';
   });
   const [useGoogle3D, setUseGoogle3D] = useState<boolean>(() => hasGoogle3DTilesKey());
+
+  // ── Photorealistic / Architectural Directional & Ambient Lighting Effect ──
+  const lightingEffect = useMemo(() => {
+    const ambientLight = new AmbientLight({
+      color: [255, 255, 255],
+      intensity: 1.4,
+    });
+    const dirLight = new DirectionalLight({
+      color: [255, 255, 255],
+      intensity: 1.8,
+      direction: [-2, -4, -3],
+    });
+    return new LightingEffect({ ambientLight, dirLight });
+  }, []);
 
   const isLightStyle = selectedStyleUrl.includes('positron');
 
@@ -185,6 +212,24 @@ export default function MapDeckGL({
   useEffect(() => {
     fitBoundsToBuilding();
   }, [building?.building_id, selectedFloor, fitBoundsToBuilding]);
+
+  // ── Fetch Surrounding Neighborhood City Context (500m / 1000m) ──
+  useEffect(() => {
+    if (contextRadius === 'off' || !mapLat || !mapLng) {
+      setSurroundingCityContext(null);
+      return;
+    }
+    const radius = contextRadius === '1km' ? 1000 : 500;
+    let cancelled = false;
+    fetchSurroundingCityContext(mapLat, mapLng, radius, building?.osm_id, 16)
+      .then((ctx) => {
+        if (!cancelled) setSurroundingCityContext(ctx);
+      })
+      .catch((err) => console.warn('[Deck.gl City Context] fetch error:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, [mapLat, mapLng, building?.osm_id, contextRadius]);
 
   const handleMapLoad = useCallback((evt: { target: maplibregl.Map }) => {
     mapRef.current = evt.target;
@@ -277,10 +322,10 @@ export default function MapDeckGL({
           isHovered,
         },
         geometry: {
-          type: poly.type || 'Polygon',
-          coordinates: polygons[0] ? polygons[0].map((ring: number[][]) =>
-            ring.map((coord: number[]) => [coord[0], coord[1], renderZBase])
-          ) : [],
+          type: poly?.type || 'Polygon',
+          coordinates: poly?.type === 'MultiPolygon' 
+            ? polygons.map((polygon: any) => polygon.map((ring: number[][]) => ring.map((coord: number[]) => [coord[0], coord[1], renderZBase])))
+            : polygons[0] ? polygons[0].map((ring: number[][]) => ring.map((coord: number[]) => [coord[0], coord[1], renderZBase])) : [],
         },
       };
     });
@@ -330,10 +375,10 @@ export default function MapDeckGL({
           isFloorIsolated,
         },
         geometry: {
-          type: 'Polygon',
-          coordinates: polygon.map((ring: number[][]) =>
-            ring.map((coord: number[]) => [coord[0], coord[1], renderZBase])
-          ),
+          type: poly?.type || 'Polygon',
+          coordinates: poly?.type === 'MultiPolygon'
+            ? polygons.map((polygon: any) => polygon.map((ring: number[][]) => ring.map((coord: number[]) => [coord[0], coord[1], renderZBase])))
+            : polygons[0] ? polygons[0].map((ring: number[][]) => ring.map((coord: number[]) => [coord[0], coord[1], renderZBase])) : [],
         },
       }));
     });
@@ -481,6 +526,15 @@ export default function MapDeckGL({
   }, [selectedFloor, cadastralVolumes.floorVolumes, cadastralVolumes.floorHeightM, mapLng, mapLat]);
 
   const googleTilesUrl = useMemo(() => getGoogle3DTilesUrl(), []);
+
+  // ── Surrounding Multi-Floor GeoJSON & Subterranean Neighborhood Network ──
+  const surroundingFloorsGeoJSON = useMemo(() => {
+    return generateSurroundingFloorsGeoJSON(surroundingCityContext?.buildings || []);
+  }, [surroundingCityContext?.buildings]);
+
+  const neighborhoodUtilityNetwork = useMemo(() => {
+    return getNeighborhoodUtilityPipelines(building, surroundingCityContext?.buildings || []);
+  }, [building, surroundingCityContext?.buildings]);
 
   // ─────────────────────────────────────────────────────────────
   // DECK.GL LAYER STACK:
@@ -714,6 +768,63 @@ export default function MapDeckGL({
         );
       }
 
+      // Interconnected Neighborhood Subterranean Utility Pipeline Network
+      if (neighborhoodUtilityNetwork.pathLayerData.length > 0) {
+        undergroundLayers.push(
+          new PathLayer({
+            id: 'neighborhood-utility-paths-layer',
+            data: neighborhoodUtilityNetwork.pathLayerData,
+            getPath: (d: any) => d.path,
+            getColor: (d: any) => d.color,
+            getWidth: (d: any) => d.width,
+            widthUnits: 'pixels',
+            capRounded: true,
+            jointRounded: true,
+            opacity: 0.92,
+            pickable: true,
+            autoHighlight: true,
+            highlightColor: [255, 255, 255, 220],
+            onClick: (info: any) => {
+              if (info.object) {
+                setSelectedUnderground(info.object);
+              }
+            },
+          })
+        );
+      }
+
+      if (neighborhoodUtilityNetwork.serviceNodes.length > 0) {
+        undergroundLayers.push(
+          new ColumnLayer({
+            id: 'neighborhood-utility-nodes-layer',
+            data: neighborhoodUtilityNetwork.serviceNodes,
+            getPosition: (d: any) => d.position,
+            getFillColor: (d: any) => d.color,
+            getLineColor: [255, 255, 255, 200],
+            getLineWidth: 1.5,
+            lineWidthUnits: 'pixels',
+            radius: 1.4,
+            diskResolution: 12,
+            elevationScale: 1.0,
+            getElevation: 0.8,
+            opacity: 0.95,
+            pickable: true,
+            autoHighlight: true,
+            highlightColor: [255, 255, 255, 200],
+            onClick: (info: any) => {
+              if (info.object) {
+                setSelectedUnderground({
+                  title: `${info.object.buildingName} Service Node`,
+                  type: info.object.type,
+                  ulpin: `ULPIN-NODE-${info.object.type.toUpperCase()}`,
+                  depth_m: Math.abs(info.object.position[2] || 2.5),
+                });
+              }
+            },
+          })
+        );
+      }
+
       if (undergroundPipesData.length > 0) {
         undergroundLayers.push(
           new ColumnLayer({
@@ -779,9 +890,61 @@ export default function MapDeckGL({
       }
     }
 
-    // ── Layer 7: Surrounding Context City Tiles (Only for background context) ──
-    if (showContextBuildings) {
-      if (useGoogle3D && googleTilesUrl && google3DStatus !== 'unavailable') {
+    // ── Layer 7: Surrounding 3D Neighborhood Floors Strata Layer (500m / 1km) ──
+    if (contextRadius !== 'off') {
+      if (surroundingFloorsGeoJSON && surroundingFloorsGeoJSON.features.length > 0) {
+        contextLayers.push(
+          new GeoJsonLayer({
+            id: 'surrounding-city-floors-cadastre-layer',
+            data: surroundingFloorsGeoJSON as any,
+            extruded: true,
+            wireframe: true,
+            getElevation: (f: any) => f.properties.height || 3.5,
+            getFillColor: (f: any) => {
+              const p = f.properties;
+              if (p.isBasement) {
+                return isLightStyle ? [129, 140, 248, 150] : [99, 102, 241, 160]; // Distinct violet basement
+              }
+              return isLightStyle ? [175, 190, 205, 195] : [64, 82, 108, 220]; // Distinct high-contrast architectural slate
+            },
+            getLineColor: (f: any) => {
+              const p = f.properties;
+              if (p.isBasement) {
+                return isLightStyle ? [99, 102, 241, 220] : [165, 180, 252, 220];
+              }
+              return isLightStyle ? [70, 95, 125, 200] : [56, 189, 248, 190]; // Sky-blue floor wireframe
+            },
+            getLineWidth: 1.4,
+            lineWidthMinPixels: 1.2,
+            lineWidthUnits: 'pixels',
+            material: {
+              ambient: 0.55,
+              diffuse: 0.7,
+              shininess: 32,
+              specularColor: [100, 130, 160],
+            },
+            pickable: true,
+            autoHighlight: true,
+            highlightColor: [56, 189, 248, 160],
+            onClick: (info: any) => {
+              if (info.object?.properties) {
+                const p = info.object.properties;
+                setSelectedUnderground({
+                  title: `${p.buildingName} (${p.floorLabel})`,
+                  type: p.isBasement ? 'basement' : 'parking',
+                  ulpin: `ULPIN-SURROUND-${p.buildingId}-${p.floorLabel}`,
+                  subsurface_zone: p.isBasement ? 'SUBTERRANEAN STRATA' : 'ABOVE-GROUND STRATA',
+                  depth_m: p.isBasement ? 3.5 : 0,
+                });
+              }
+            },
+            updateTriggers: {
+              getFillColor: [isLightStyle, contextRadius],
+              getLineColor: [isLightStyle, contextRadius],
+            },
+          })
+        );
+      } else if (useGoogle3D && googleTilesUrl && google3DStatus !== 'unavailable') {
         contextLayers.push(
           new Tile3DLayer({
             id: 'google-photorealistic-3d-tiles-context',
@@ -808,19 +971,6 @@ export default function MapDeckGL({
             },
           })
         );
-      } else {
-        contextLayers.push(
-          new Tile3DLayer({
-            id: 'reearth-osm-buildings-context',
-            data: REEARTH.buildingsTileset,
-            loader: Tiles3DLoader,
-            opacity: 0.55,
-            pickable: false,
-            loadOptions: {
-              '3d-tiles': { loadGLTF: true },
-            },
-          })
-        );
       }
     }
 
@@ -843,7 +993,9 @@ export default function MapDeckGL({
     undergroundPathsData,
     undergroundPipesData,
     undergroundLabelsData,
-    showContextBuildings,
+    neighborhoodUtilityNetwork,
+    contextRadius,
+    surroundingFloorsGeoJSON,
     useGoogle3D,
     googleTilesUrl,
     google3DStatus,
@@ -859,6 +1011,7 @@ export default function MapDeckGL({
         viewState={viewState}
         onViewStateChange={({ viewState: vs }) => setViewState(vs as any)}
         controller={true}
+        effects={[lightingEffect]}
         layers={layers}
         getCursor={({ isHovering }) => (isHovering ? 'pointer' : 'grab')}
       >
@@ -876,13 +1029,25 @@ export default function MapDeckGL({
         <button type="button" className="map-control-btn" onClick={handleResetCamera} title="Reset Camera View">
           <Maximize2 size={15} />
         </button>
+        
+        {/* City Context (500m / 1km / Off) Toggle Button */}
         <button
           type="button"
-          className={`map-control-btn ${showContextBuildings ? 'active' : ''}`}
-          onClick={() => setShowContextBuildings((v) => !v)}
-          title="Toggle Context 3D Buildings"
+          className={`map-control-btn ${contextRadius !== 'off' ? 'active' : ''}`}
+          onClick={() => {
+            setContextRadius((prev) => (prev === '1km' ? '500m' : prev === '500m' ? 'off' : '1km'));
+          }}
+          title={`Show City Context: ${contextRadius.toUpperCase()} (Click to toggle 1km / 500m / Off)`}
+          style={{
+            borderColor: contextRadius !== 'off' ? '#00c8ff' : undefined,
+            color: contextRadius === '1km' ? '#38bdf8' : contextRadius === '500m' ? '#2dd4bf' : undefined,
+            position: 'relative',
+          }}
         >
           <Building2 size={17} />
+          <span style={{ position: 'absolute', bottom: 1, right: 2, fontSize: '8px', fontWeight: 800 }}>
+            {contextRadius === '1km' ? '1k' : contextRadius === '500m' ? '0.5' : 'off'}
+          </span>
         </button>
         {hasGoogle3DTilesKey() && (
           <button

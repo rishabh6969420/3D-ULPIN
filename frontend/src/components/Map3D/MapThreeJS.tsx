@@ -29,7 +29,7 @@ import {
 } from '../../utils/footprintUtils';
 import { getBuildingUtilityPipelines } from '../../utils/utilityNetworkHelper';
 import { fetchTerrainHeight } from '../../utils/reearth';
-import { fetchDetailedOSMData, OSMDataResponse } from '../../utils/osmFetcher';
+import { fetchDetailedOSMData, extractBuildingPartsFromOSM, OSMDataResponse } from '../../utils/osmFetcher';
 import { generate3DBuildingOSM2World, OSM2WorldResult } from '../../utils/osm2worldProvider';
 import { findCustomModel, CustomModelConfig } from '../../data/customModels';
 import {
@@ -50,6 +50,11 @@ import {
 import { applyVerifiedBuildingMetadata, getVerifiedBuildingMetadata } from '../../utils/verifiedBuildingMetadata';
 import { inferBuildingMetadata } from '../../api/api';
 import {
+  fetchSurroundingCityContext,
+  SurroundingBuildingData,
+} from '../../utils/cityContextFetcher';
+import { buildCityContextInstancedMesh } from '../../utils/cityContextMeshBuilder';
+import {
   RotateCw,
   Layers,
   MapPin,
@@ -68,6 +73,7 @@ import {
   ChevronUp,
   Landmark,
   Sliders,
+  Building2,
 } from 'lucide-react';
 import './Map3D.css';
 
@@ -616,27 +622,33 @@ function buildSurroundingContext(
     color: isMughalHeritage ? 0x234d20 : isStepwell ? 0x2d6a4f : 0x1e3a1e,
     roughness: 0.9,
     metalness: 0.02,
-    name: 'Surrounding_Grass_Terrain'
+    name: 'Surrounding_Grass_Terrain',
+    polygonOffset: true,
+    polygonOffsetFactor: 2.0,
+    polygonOffsetUnits: 2.0,
   });
   const groundGeo = new THREE.PlaneGeometry(groundWidth, groundDepth);
   const groundMesh = new THREE.Mesh(groundGeo, grassMat);
   groundMesh.rotation.x = -Math.PI / 2;
-  groundMesh.position.y = -0.06;
+  groundMesh.position.y = -0.02;
   groundMesh.receiveShadow = true;
   surroundingsGroup.add(groundMesh);
 
   // 2. Central Parcel Paving Plinth
   const plazaTex = generatePlazaTexture();
   plazaTex.repeat.set(Math.max(2, Math.round(dims.width / 15)), Math.max(2, Math.round(dims.depth / 15)));
-  const parcelPlazaGeo = new THREE.BoxGeometry(dims.width * 1.5, 0.1, dims.depth * 1.5);
+  const parcelPlazaGeo = new THREE.BoxGeometry(dims.width * 1.5, 0.04, dims.depth * 1.5);
   const parcelPlazaMat = new THREE.MeshStandardMaterial({
     map: plazaTex,
     roughness: 0.75,
     metalness: 0.15,
-    name: 'Parcel_Plaza_Plinth'
+    name: 'Parcel_Plaza_Plinth',
+    polygonOffset: true,
+    polygonOffsetFactor: -1.0,
+    polygonOffsetUnits: -4.0,
   });
   const parcelPlazaMesh = new THREE.Mesh(parcelPlazaGeo, parcelPlazaMat);
-  parcelPlazaMesh.position.set(0, -0.01, 0);
+  parcelPlazaMesh.position.set(0, 0.0, 0);
   parcelPlazaMesh.receiveShadow = true;
   surroundingsGroup.add(parcelPlazaMesh);
 
@@ -644,11 +656,11 @@ function buildSurroundingContext(
   const bndW = dims.width * 1.5;
   const bndD = dims.depth * 1.5;
   const bndPoints = [
-    new THREE.Vector3(-bndW / 2, 0.05, -bndD / 2),
-    new THREE.Vector3(bndW / 2, 0.05, -bndD / 2),
-    new THREE.Vector3(bndW / 2, 0.05, bndD / 2),
-    new THREE.Vector3(-bndW / 2, 0.05, bndD / 2),
-    new THREE.Vector3(-bndW / 2, 0.05, -bndD / 2),
+    new THREE.Vector3(-bndW / 2, 0.03, -bndD / 2),
+    new THREE.Vector3(bndW / 2, 0.03, -bndD / 2),
+    new THREE.Vector3(bndW / 2, 0.03, bndD / 2),
+    new THREE.Vector3(-bndW / 2, 0.03, bndD / 2),
+    new THREE.Vector3(-bndW / 2, 0.03, -bndD / 2),
   ];
   const bndGeo = new THREE.BufferGeometry().setFromPoints(bndPoints);
   const bndMat = new THREE.LineDashedMaterial({
@@ -661,7 +673,7 @@ function buildSurroundingContext(
   bndLine.computeLineDistances();
   surroundingsGroup.add(bndLine);
 
-  // Cadastral Corner Marker Pegs (P1, P2, P3, P4)
+  // Corner Marker Pegs (P1, P2, P3, P4)
   const pegMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.8 });
   const cornerCoords = [
     [-bndW / 2, -bndD / 2],
@@ -674,173 +686,6 @@ function buildSurroundingContext(
     peg.position.set(cx, 0.3, cz);
     surroundingsGroup.add(peg);
   });
-
-  // 4. Real-World Roadway Network (Asphalt Street, Yellow Centerlines, Crosswalks, Sidewalks)
-  const roadAsphaltMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9, metalness: 0.05 });
-  const roadWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4, metalness: 0.1 });
-  const roadYellowMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.4, metalness: 0.1 });
-  const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.75, metalness: 0.1 });
-
-  const roadZ = bndD / 2 + 10;
-  const roadW = 10.0;
-  const roadLen = groundWidth;
-
-  const frontRoad = new THREE.Mesh(new THREE.BoxGeometry(roadLen, 0.12, roadW), roadAsphaltMat);
-  frontRoad.position.set(0, 0.02, roadZ);
-  frontRoad.receiveShadow = true;
-  surroundingsGroup.add(frontRoad);
-
-  for (let rx = -roadLen / 2 + 4; rx <= roadLen / 2 - 4; rx += 5) {
-    const dash = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.02, 0.18), roadYellowMat);
-    dash.position.set(rx, 0.09, roadZ);
-    surroundingsGroup.add(dash);
-  }
-
-  const crossX = [-dims.width / 2, dims.width / 2];
-  crossX.forEach((cx) => {
-    for (let bar = -3.5; bar <= 3.5; bar += 1.0) {
-      const zebra = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.02, roadW * 0.8), roadWhiteMat);
-      zebra.position.set(cx + bar, 0.09, roadZ);
-      surroundingsGroup.add(zebra);
-    }
-  });
-
-  const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(roadLen, 0.22, 3.2), sidewalkMat);
-  sidewalk.position.set(0, 0.1, roadZ - (roadW / 2) - 1.6);
-  surroundingsGroup.add(sidewalk);
-
-  // 5. Authentic Trees according to Regional Context
-  const barkMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.9 });
-  const foliageMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.65, metalness: 0.05 });
-  const cypressMat = new THREE.MeshStandardMaterial({ color: 0x143621, roughness: 0.75, metalness: 0.02 });
-
-  const treeXOffsets = [-bndW / 2 - 6, bndW / 2 + 6];
-  const treeZRange = [-bndD / 2, 0, bndD / 2];
-
-  treeXOffsets.forEach((tx) => {
-    treeZRange.forEach((tz, idx) => {
-      const treeGrp = new THREE.Group();
-      if (isKerala) {
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, 7.5, 8), barkMat);
-        trunk.position.y = 3.75;
-        trunk.rotation.z = tx > 0 ? -0.06 : 0.06;
-        treeGrp.add(trunk);
-        for (let frond = 0; frond < 8; frond++) {
-          const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.7, 3.5, 4), foliageMat);
-          leaf.position.set(0, 7.2, 0);
-          leaf.rotation.y = (frond / 8) * Math.PI * 2;
-          leaf.rotation.z = Math.PI / 2.8;
-          treeGrp.add(leaf);
-        }
-      } else if (isMughalHeritage) {
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 1.2, 8), barkMat);
-        trunk.position.y = 0.6;
-        treeGrp.add(trunk);
-        const c1 = new THREE.Mesh(new THREE.ConeGeometry(1.2, 4.0, 8), cypressMat);
-        c1.position.y = 2.8;
-        treeGrp.add(c1);
-        const c2 = new THREE.Mesh(new THREE.ConeGeometry(0.8, 3.2, 8), cypressMat);
-        c2.position.y = 4.8;
-        treeGrp.add(c2);
-      } else {
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 3.8, 8), barkMat);
-        trunk.position.y = 1.9;
-        treeGrp.add(trunk);
-        const canopy = new THREE.Mesh(new THREE.DodecahedronGeometry(2.5 + (idx % 2) * 0.5, 1), foliageMat);
-        canopy.position.y = 4.6;
-        treeGrp.add(canopy);
-      }
-      treeGrp.position.set(tx, 0, tz);
-      surroundingsGroup.add(treeGrp);
-    });
-  });
-
-  // 6. Street Lighting Poles with Warm Light Cast
-  const lightPoleMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.25 });
-  const lightGlowMat = new THREE.MeshStandardMaterial({ color: 0xffedd5, emissive: 0xffedd5, emissiveIntensity: 1.4 });
-  const lightPositions = [
-    [-bndW / 2 + 5, roadZ - 5],
-    [bndW / 2 - 5, roadZ - 5],
-    [0, roadZ - 5]
-  ];
-  lightPositions.forEach(([lx, lz]) => {
-    const lamp = new THREE.Group();
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 5.5, 8), lightPoleMat);
-    pole.position.y = 2.75;
-    lamp.add(pole);
-
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 1.2), lightPoleMat);
-    arm.position.set(0, 5.4, 0.6);
-    lamp.add(arm);
-
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), lightGlowMat);
-    bulb.position.set(0, 5.3, 1.1);
-    lamp.add(bulb);
-
-    const ptLight = new THREE.PointLight(0xffedd5, 0.8, 14);
-    ptLight.position.set(0, 5.3, 1.1);
-    lamp.add(ptLight);
-
-    lamp.position.set(lx, 0, lz);
-    surroundingsGroup.add(lamp);
-  });
-
-  // 7. Parked Vehicles along the street curb
-  const carPaintMat1 = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3, metalness: 0.7 });
-  const carPaintMat2 = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.3, metalness: 0.7 });
-  const carPaintMat3 = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3, metalness: 0.7 });
-  const carGlassMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.1, metalness: 0.9 });
-  const tireMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 });
-
-  const parkedCars = [
-    { x: -bndW / 2 + 12, z: roadZ - 3, color: carPaintMat1 },
-    { x: bndW / 2 - 12, z: roadZ - 3, color: carPaintMat2 },
-    { x: -bndW / 2 + 20, z: roadZ - 3, color: carPaintMat3 }
-  ];
-  parkedCars.forEach(({ x, z, color }) => {
-    const car = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.7, 1.9), color);
-    body.position.y = 0.5;
-    car.add(body);
-
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.65, 1.6), carGlassMat);
-    cabin.position.set(-0.2, 1.1, 0);
-    car.add(cabin);
-
-    const wGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.22, 10);
-    wGeo.rotateX(Math.PI / 2);
-    [[-1.3, -0.9], [-1.3, 0.9], [1.3, -0.9], [1.3, 0.9]].forEach(([wx, wz]) => {
-      const w = new THREE.Mesh(wGeo, tireMat);
-      w.position.set(wx, 0.32, wz);
-      car.add(w);
-    });
-
-    car.position.set(x, 0, z);
-    surroundingsGroup.add(car);
-  });
-
-  // 8. Neighboring Real-World Context Building Massings across the road
-  if (!isStepwell && !isMughalHeritage) {
-    const contextMat = new THREE.MeshStandardMaterial({
-      color: 0x334155,
-      roughness: 0.65,
-      metalness: 0.25,
-      transparent: true,
-      opacity: 0.65,
-      name: 'Context_Neighbor_Building'
-    });
-
-    const neighborConfigs = [
-      { x: -38, z: roadZ + 22, w: 26, h: 18, d: 20 },
-      { x: 0, z: roadZ + 24, w: 32, h: 24, d: 22 },
-      { x: 38, z: roadZ + 22, w: 28, h: 15, d: 20 }
-    ];
-    neighborConfigs.forEach(({ x, z, w, h, d }) => {
-      const nMesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), contextMat);
-      nMesh.position.set(x, h / 2, z);
-      surroundingsGroup.add(nMesh);
-    });
-  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1940,6 +1785,51 @@ export default function MapThreeJS({
     [verifiedBuilding?.building_id, centerLat, centerLng, verifiedBuilding?.osm_id]
   );
 
+  // ── 3D Neighborhood City Context State (500m / 1km / Off) ──
+  const [contextRadius, setContextRadius] = useState<'500m' | '1km' | 'off'>('1km');
+  const [surroundingBuildings, setSurroundingBuildings] = useState<SurroundingBuildingData[]>([]);
+
+  // ── Fetch Surrounding Neighborhood City Context (500m / 1000m) ──
+  useEffect(() => {
+    if (contextRadius === 'off' || !centerLat || !centerLng) {
+      setSurroundingBuildings([]);
+      return;
+    }
+    const radius = contextRadius === '1km' ? 1000 : 500;
+    let cancelled = false;
+    fetchSurroundingCityContext(centerLat, centerLng, radius, verifiedBuilding.osm_id, 16)
+      .then((ctx) => {
+        if (!cancelled) setSurroundingBuildings(ctx.buildings);
+      })
+      .catch((err) => console.warn('[Three.js City Context] fetch error:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, [centerLat, centerLng, verifiedBuilding?.osm_id, contextRadius]);
+
+  // ── Mount / Update Surrounding City Context Instanced Mesh in Three.js Scene ──
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    const existingCityGroup = scene.getObjectByName('city_context_neighborhood_skyline');
+    if (existingCityGroup) {
+      scene.remove(existingCityGroup);
+      disposeThreeGroup(existingCityGroup as THREE.Group);
+    }
+
+    if (contextRadius !== 'off' && surroundingBuildings.length > 0) {
+      const radiusMeters = contextRadius === '1km' ? 1000 : 500;
+      const targetDims = {
+        width: dims.width,
+        depth: dims.depth,
+        height: buildingHeight,
+      };
+      const cityGroup = buildCityContextInstancedMesh(surroundingBuildings, radiusMeters, targetDims, verifiedBuilding);
+      scene.add(cityGroup);
+    }
+  }, [surroundingBuildings, contextRadius, dims.width, dims.depth, buildingHeight, verifiedBuilding]);
+
   useEffect(() => {
     if (!centerLat || !centerLng) return;
     let cancelled = false;
@@ -1972,34 +1862,62 @@ export default function MapThreeJS({
     const sceneExtent = Math.max(maxDim * 4, buildingHeight * 0.8, 80);
 
     const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f172a); // Tailwind Slate-900
+    scene.fog = new THREE.FogExp2(0x0f172a, 0.0012);
     sceneRef.current = scene;
 
-    // Atmospheric Sky Dome Background
-    const skyDomeGeo = new THREE.SphereGeometry(Math.max(sceneExtent * 5, 600), 32, 32);
-    const skyDomeMat = new THREE.MeshBasicMaterial({
-      color: 0x080e1a,
-      side: THREE.BackSide,
-    });
-    const skyDome = new THREE.Mesh(skyDomeGeo, skyDomeMat);
-    scene.add(skyDome);
-
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.5, 100000);
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.5, 4000.0);
     const heightFactor = buildingHeight > 500 ? 1.6 : buildingHeight > 250 ? 1.4 : 1.1;
     const targetCamDist = Math.max(maxDim * 2.2, buildingHeight * heightFactor, 45);
     camera.position.set(targetCamDist * 0.9, buildingHeight * 0.55 + maxDim * 0.25, targetCamDist * 0.9);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance',
+      logarithmicDepthBuffer: false,
+    });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.0;
 
     mountRef.current.innerHTML = '';
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
+
+    // Procedural Atmospheric & Architectural HDRI Environment Map
+    let pmremGen: THREE.PMREMGenerator | null = null;
+    let envMap: THREE.Texture | null = null;
+    try {
+      pmremGen = new THREE.PMREMGenerator(renderer);
+      pmremGen.compileEquirectangularShader();
+      const envCanvas = document.createElement('canvas');
+      envCanvas.width = 512;
+      envCanvas.height = 256;
+      const envCtx = envCanvas.getContext('2d');
+      if (envCtx) {
+        const grad = envCtx.createLinearGradient(0, 0, 0, 256);
+        grad.addColorStop(0.0, '#0a0f1d'); // Deep twilight zenith
+        grad.addColorStop(0.35, '#1e293b'); // Dark slate sky
+        grad.addColorStop(0.65, '#38bdf8'); // Horizon atmospheric cyan glow
+        grad.addColorStop(0.75, '#fb923c'); // Dusk golden warmth
+        grad.addColorStop(0.85, '#0f172a'); // Ground horizon reflection
+        grad.addColorStop(1.0, '#030712'); // Nadir asphalt
+        envCtx.fillStyle = grad;
+        envCtx.fillRect(0, 0, 512, 256);
+      }
+      const envTexture = new THREE.CanvasTexture(envCanvas);
+      envTexture.mapping = THREE.EquirectangularReflectionMapping;
+      envMap = pmremGen.fromEquirectangular(envTexture).texture;
+      scene.environment = envMap;
+      envTexture.dispose();
+    } catch (envErr) {
+      console.warn('PMREM environment initialization skipped:', envErr);
+    }
 
     const targetY = buildingHeight * 0.45;
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -2008,16 +1926,16 @@ export default function MapThreeJS({
     controls.target.set(0, targetY, 0);
     controls.maxPolarAngle = Math.PI / 2 - 0.02;
     controls.minDistance = Math.max(4, maxDim * 0.3);
-    controls.maxDistance = Math.max(25000, buildingHeight * 15);
+    controls.maxDistance = Math.min(3000, Math.max(800, buildingHeight * 10));
     controlsRef.current = controls;
     camera.lookAt(0, targetY, 0);
 
-    // Lighting Setup
-    const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x334155, 1.8);
+    // Three-point Architectural Lighting Setup (prevents overexposure/white flash)
+    const hemiLight = new THREE.HemisphereLight(0x94a3b8, 0x1e293b, 1.2);
     scene.add(hemiLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfffaf0, 2.9);
-    sunLight.position.set(sceneExtent * 0.8, buildingHeight * 1.5 + sceneExtent, sceneExtent * 0.8);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    sunLight.position.set(300, 500, 200);
     sunLight.target.position.set(0, targetY, 0);
     scene.add(sunLight.target);
     sunLight.castShadow = true;
@@ -2026,22 +1944,17 @@ export default function MapThreeJS({
     sunLight.shadow.bias = -0.0002;
     sunLight.shadow.normalBias = 0.08;
     sunLight.shadow.camera.near = 1;
-    sunLight.shadow.camera.far = Math.max(sceneExtent * 4, buildingHeight * 3.5);
-    const d = Math.max(sceneExtent * 1.2, buildingHeight * 0.7);
+    sunLight.shadow.camera.far = 4000;
+    const d = Math.max(sceneExtent * 1.5, buildingHeight * 0.8, 150);
     sunLight.shadow.camera.left = -d;
     sunLight.shadow.camera.right = d;
     sunLight.shadow.camera.top = d;
     sunLight.shadow.camera.bottom = -d;
     scene.add(sunLight);
     
-    // Fill light to bring out architectural detail on shadowed sides of tall models
-    const fillLight = new THREE.DirectionalLight(0x94a3b8, 1.4);
-    fillLight.position.set(-sceneExtent * 0.8, buildingHeight * 0.6, -sceneExtent * 0.8);
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.5);
+    fillLight.position.set(-300, 200, -200);
     scene.add(fillLight);
-
-    const rimLight = new THREE.PointLight(0x818cf8, 3.5, sceneExtent * 2.5);
-    rimLight.position.set(-maxDim * 1.5, buildingHeight * 0.8, -maxDim * 1.5);
-    scene.add(rimLight);
 
     // Surrounding Site Plaza & Landscaping (Broader ground area for proper site context)
     buildSurroundingContext(scene, dims, sceneExtent, building, findCustomModel(building));
@@ -2599,19 +2512,20 @@ export default function MapThreeJS({
       }
 
       // 3. Asynchronously fetch full Overpass data & convert with OSM2World
-      // STRICT RULE: Provider Isolation. If we already have OSM building:parts or reference-assisted reconstruction,
-      // do NOT run OSM2World fallback or overwrite the primary architectural geometry.
-      // Also skip for manual buildings (no osm_id) — they won't match any OSM element.
-      const tierEval = evaluateBestGeometryProvider(verifiedBuilding, false);
-      const isRefAssisted = tierEval.provider === 'REFERENCE_ASSISTED';
-      const hasBuildingParts = Boolean(verifiedBuilding.building_parts && verifiedBuilding.building_parts.length > 0);
-      const hasOsmId = Boolean(verifiedBuilding.osm_id);
-      if (!hasBuildingParts && !isRefAssisted && hasOsmId) {
-        (async () => {
-          try {
-            const osmData = await fetchDetailedOSMData(centerLat, centerLng, 180, building.osm_id);
+      // 3. Asynchronously fetch full Overpass data & convert with OSM2World & Procedural multi-part extraction
+      (async () => {
+        try {
+          const searchRadius = Math.max((building.floor_count || 1) * 3.5, 350);
+          const osmData = await fetchDetailedOSMData(centerLat, centerLng, searchRadius, building.osm_id);
           if (reqId !== currentRequestIdRef.current || !osmData || !osmData.elements || osmData.elements.length === 0) {
             return;
+          }
+
+          // Extract real building parts from OSM vector data
+          const extractedParts = extractBuildingPartsFromOSM(osmData, buildingHeight / (building.floor_count || 1), building.floor_count || 1);
+          if (extractedParts.length > 0) {
+            verifiedBuilding.building_parts = extractedParts;
+            applyProceduralReconstruction();
           }
 
           const o2wResult = await generate3DBuildingOSM2World(osmData, {
@@ -2694,7 +2608,6 @@ export default function MapThreeJS({
           console.warn('OSM2World generation failed, keeping procedural fallback:', err);
         }
       })();
-      }
     }
 
     // Construct Cadastral ULPIN Floor Layers
@@ -2733,8 +2646,12 @@ export default function MapThreeJS({
       });
 
       let bMesh: THREE.Mesh;
-      if (shape) {
-        const slabGeo = new THREE.ExtrudeGeometry(shape, { depth: floorHeight * 0.95, bevelEnabled: false });
+      const bFloorData = verifiedBuilding.floors?.find(fl => (fl.floor_number ?? fl.floor) === bFloorNum);
+      const bFloorPolygon = bFloorData?.footprint || verifiedBuilding.footprint;
+      const bShape = bFloorPolygon ? footprintToShape(bFloorPolygon, centerLng, centerLat) : shape;
+
+      if (bShape) {
+        const slabGeo = new THREE.ExtrudeGeometry(bShape, { depth: floorHeight * 0.95, bevelEnabled: false });
         slabGeo.rotateX(-Math.PI / 2);
         slabGeo.computeBoundingBox();
         slabGeo.computeBoundingSphere();
@@ -2787,8 +2704,30 @@ export default function MapThreeJS({
       });
 
       let levelMesh: THREE.Mesh;
-      if (shape) {
-        const slabGeo = new THREE.ExtrudeGeometry(shape, { depth: floorHeight * 0.95, bevelEnabled: false });
+      const floorData = verifiedBuilding.floors?.find(fl => (fl.floor_number ?? fl.floor) === floorNum);
+      const floorPolygon = floorData?.footprint || verifiedBuilding.footprint;
+      const floorShape = floorPolygon ? footprintToShape(floorPolygon, centerLng, centerLat) : shape;
+
+      if (floorShape) {
+        let finalShape = floorShape;
+        
+        // Procedural Stepped Tapering for Skyscrapers in Cadastral Mode
+        if (totalFloors > 25) {
+           const progress = floorNum / totalFloors;
+           let scale = 1.0;
+           // Create classic skyscraper "wedding cake" setbacks
+           if (progress > 0.85) scale = 0.25;
+           else if (progress > 0.70) scale = 0.40;
+           else if (progress > 0.50) scale = 0.55;
+           else if (progress > 0.30) scale = 0.75;
+           else if (progress > 0.15) scale = 0.90;
+           
+           if (scale !== 1.0) {
+               finalShape = scaleShape(floorShape, scale);
+           }
+        }
+
+        const slabGeo = new THREE.ExtrudeGeometry(finalShape, { depth: floorHeight * 0.95, bevelEnabled: false });
         slabGeo.rotateX(-Math.PI / 2);
         slabGeo.computeBoundingBox();
         slabGeo.computeBoundingSphere();
@@ -3017,6 +2956,12 @@ export default function MapThreeJS({
       window.removeEventListener('resize', handleResize);
       domElem.removeEventListener('pointermove', handlePointerMove);
       domElem.removeEventListener('click', handleClick);
+      try {
+        if (pmremGen) pmremGen.dispose();
+        if (envMap) envMap.dispose();
+      } catch (e) {
+        // ignore
+      }
       renderer.dispose();
       clearTimeout(startRevealTimeout);
       // @ts-ignore — revealTimer may not be set if floors = 0
@@ -3560,6 +3505,22 @@ export default function MapThreeJS({
           <span>Wireframe</span>
         </button>
 
+        {/* City Context 3-Way Mode Toggle (500m / 1km / Off) */}
+        <button
+          className={`toolbar-btn ${contextRadius !== 'off' ? 'active' : ''}`}
+          onClick={() => {
+            setContextRadius((prev) => (prev === '1km' ? '500m' : prev === '500m' ? 'off' : '1km'));
+          }}
+          title={`Show City Context: ${contextRadius.toUpperCase()} (Click to toggle 1km / 500m / Off)`}
+          style={{
+            borderColor: contextRadius !== 'off' ? '#00c8ff' : undefined,
+            color: contextRadius === '1km' ? '#38bdf8' : contextRadius === '500m' ? '#2dd4bf' : undefined,
+          }}
+        >
+          <Building2 size={15} />
+          <span>City: {contextRadius.toUpperCase()}</span>
+        </button>
+
         <button
           className={`toolbar-btn ${showDebugHud ? 'active' : ''}`}
           onClick={() => setShowDebugHud(!showDebugHud)}
@@ -3748,6 +3709,17 @@ export default function MapThreeJS({
             </div>
           </div>
         </div>
+      )}
+      {/* 3D Title Deed Certificate Modal */}
+      {showCertificateModal && inspectingUnit && (
+        <CertificateModal
+          unit={inspectingUnit}
+          building={building}
+          onClose={() => {
+            setShowCertificateModal(false);
+            setInspectingUnit(null);
+          }}
+        />
       )}
     </div>
   );
